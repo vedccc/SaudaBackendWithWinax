@@ -6,6 +6,7 @@ const {
   getClosingRate,
   formatDateYYYYMMDD,
   SDCLRATE,
+  Get_MaxExCondate,
 } = require("../utils/utils");
 
 const testController = {
@@ -248,6 +249,7 @@ const testController = {
         LTillDate = new Date(req?.body?.toDate);
         LTFromDate = new Date(req?.body?.fromDate);
         LMStrDate = "";
+
         LMStrDate = Get_MaxExCondate(
           partiesRecordset.Fields("EXID").Value,
           LTillDate
@@ -283,7 +285,7 @@ const testController = {
         LOptType = partiesRecordset.Fields("OPTTYPE").Value;
         LItemID = partiesRecordset.Fields("itemid").Value;
         LMinRate = 0;
-        if (GMinBrokYN === "Y" && GFBroktype === "Y") {
+        if (req?.body?.GMinBrokYN === "Y" && req?.body?.GFBroktype === "Y") {
           getminrate(LPartyCode, LItemID, LExID, LMinRate);
         }
         LBuyClRate = 1;
@@ -295,7 +297,7 @@ const testController = {
           // if (req?.body?.confirmed || req?.body?.all) {
           //   LprevBal = partiesRecordset.OP_BAL;
           //   if (req?.body?.Check10.Value === 0) {
-          //     LBal = Net_DrCr(partiesRecordset.AC_CODE, req?.body?.fromDate);
+          //     LBal = Net_DrCr(LPartyCode, req?.body?.fromDate);
           //     LprevBal += LBal;
           //   }
           //   if (req?.body?.confirmed) {
@@ -313,8 +315,8 @@ const testController = {
           //       mysql = `
           //     SELECT SUM(CASE DR_CR WHEN 'D' THEN AMOUNT * -1 WHEN 'C' THEN AMOUNT * 1 END) AS AMT
           //     FROM VCHAMT
-          //     WHERE COMPCODE = ${GCompCode}
-          //     AND AC_CODE = '${partiesRecordset.AC_CODE}'
+          //     WHERE COMPCODE = ${req?.body?.companyCode}
+          //     AND AC_CODE = '${LPartyCode}'
           //     AND VOU_DT >= '${Format(req?.body?.fromDate, "yyyy/MM/dd")}'
           //     AND VOU_DT <= '${Format(vcDTP2.Value, "yyyy/MM/dd")}'
           //     AND VOU_TYPE <> 'S'
@@ -327,8 +329,8 @@ const testController = {
           //       mysql = `
           //     SELECT IMARGIN
           //     FROM DLYCLMGN
-          //     WHERE COMPCODE = ${GCompCode}
-          //       AND CLIENT = '${partiesRecordset.AC_CODE}'
+          //     WHERE COMPCODE = ${req?.body?.companyCode}
+          //       AND CLIENT = '${LPartyCode}'
           //       AND CONDATE = '${Format(vcDTP2.Value, "yyyy/MM/dd")}'
           //       AND EXCODE = 'CME'
           //   `;
@@ -341,7 +343,7 @@ const testController = {
           //         LprevBal += Get_Balance(LACCID);
           //       } else {
           //         TRec = null;
-          //         let mysql = `EXEC ACSUMVCHS ${GCompCode}, '${partiesRecordset.AC_CODE}', '${req?.body?.fromDate}', '${req?.body?.toDate}'`;
+          //         let mysql = `EXEC ACSUMVCHS ${req?.body?.companyCode}, '${LPartyCode}', '${req?.body?.fromDate}', '${req?.body?.toDate}'`;
           //         TRec = await adobeConnect(mysql);
           //         if (!TRec.EOF) LprevBal += IsNull(TRec.AMT, 0);
           //         TRec = null;
@@ -353,8 +355,8 @@ const testController = {
           //     let mysql = `
           //   SELECT DR_CR, SUM(AMOUNT) AS AMT
           //   FROM VCHAMT
-          //   WHERE COMPCODE = ${GCompCode}
-          //     AND AC_CODE = '${PartyRec.AC_CODE}'
+          //   WHERE COMPCODE = ${req?.body?.companyCode}
+          //     AND AC_CODE = '${LPartyCode}'
           //     AND VOU_DT >= '${Format(req?.body?.fromDate, "yyyy/MM/dd")}'
           //     AND VOU_TYPE <> 'S'
           //     AND VOU_DT <= '${Format(vcDTP2.Value, "yyyy/MM/dd")}'
@@ -391,14 +393,14 @@ const testController = {
             if (LAExCode == "MCX" && LLotWise == "Y") {
               LCalval = partiesRecordset.Fields("TRADEABLELOT").Value;
             } else {
-              LCalval = partiesRecordset.lot;
+              LCalval = partiesRecordset.Fields("LOT").Value;
             }
           }
           mpusdinr = 1;
 
           TRec2 = null;
           TRec2 = await adobeConnect(
-            `SELECT BILLBY,ACEXCODE FROM ACCT_EX WHERE COMPCODE = ${GCompCode} AND AC_CODE = '${PartyRec.AC_CODE}' AND EXCODE = '${LAExCode}'`
+            `SELECT BILLBY,ACEXCODE FROM ACCT_EX WHERE COMPCODE = ${req?.body?.companyCode} AND AC_CODE = '${LPartyCode}' AND EXCODE = '${LAExCode}'`
           );
           if (!TRec2.EOF) {
             LBillBy = TRec2.billby;
@@ -408,7 +410,9 @@ const testController = {
           if (LAExCode == "CMX") {
             TRec = null;
             TRec = await adobeConnect(
-              `SELECT closerate,HGRATE,LOWRATE FROM CTR_R WHERE COMPCODE = ${GCompCode} AND SAUDA = 'USDINR' AND CONDATE = '${Format(
+              `SELECT closerate,HGRATE,LOWRATE FROM CTR_R WHERE COMPCODE = ${
+                req?.body?.companyCode
+              } AND SAUDA = 'USDINR' AND CONDATE = '${Format(
                 vcDTP2.Value,
                 "YYYY/MM/DD"
               )}'`
@@ -427,7 +431,9 @@ const testController = {
           if (LBillBy === "B") {
             let TRec = null;
             TRec = await adobeConnect(
-              `SELECT CLOSERATE, HGRATE, LOWRATE FROM CTR_R WHERE COMPCODE = ${GCompCode} AND SAUDAID = '${LSaudaID}' AND CONDATE = '${Format(
+              `SELECT CLOSERATE, HGRATE, LOWRATE FROM CTR_R WHERE COMPCODE = ${
+                req?.body?.companyCode
+              } AND SAUDAID = '${LSaudaID}' AND CONDATE = '${Format(
                 vcDTP2.Value,
                 "yyyy/mm/dd"
               )}'`
@@ -464,7 +470,9 @@ const testController = {
             }
 
             TRec = await adobeConnect(
-              `SELECT SETTLERATE, HiGh, LOW FROM CTR_RP WHERE COMPCODE = ${GCompCode} AND PARTY = '${LPartyCode}' AND SAUDA = 'USDINR' AND CONDATE = '${Format(
+              `SELECT SETTLERATE, HiGh, LOW FROM CTR_RP WHERE COMPCODE = ${
+                req?.body?.companyCode
+              } AND PARTY = '${LPartyCode}' AND SAUDA = 'USDINR' AND CONDATE = '${Format(
                 vcDTP2.Value,
                 "YYYY/MM/DD"
               )}'`
@@ -477,7 +485,7 @@ const testController = {
           }
 
           // chek check 13 //
-          if (GUniqClientId === "BRO2-CHE") {
+          if (req?.body?.GUniqClientId === "BRO2-CHE") {
             if (
               mpusdinr === 1 &&
               LAExCode === "CMX" &&
@@ -486,7 +494,9 @@ const testController = {
             ) {
               let TRec = null;
               TRec = await adobeConnect(
-                `SELECT CURRRATE, USDINR FROM INV_D WHERE COMPCODE = ${GCompCode} AND PARTY = '${LPartyCode}' AND EXCODE = 'CMX' AND STDATE >= '${Format(
+                `SELECT CURRRATE, USDINR FROM INV_D WHERE COMPCODE = ${
+                  req?.body?.companyCode
+                } AND PARTY = '${LPartyCode}' AND EXCODE = 'CMX' AND STDATE >= '${Format(
                   req?.body?.fromDate,
                   "YYYY/MM/DD"
                 )}' ORDER BY STDATE DESC`
@@ -509,7 +519,9 @@ const testController = {
             ) {
               let TRec = null;
               TRec = await adobeConnect(
-                `SELECT CURRRATE, USDINR FROM INV_D WHERE COMPCODE = ${GCompCode} AND PARTY = '${LPartyCode}' AND EXCODE = 'CMX' AND STDATE >= '${Format(
+                `SELECT CURRRATE, USDINR FROM INV_D WHERE COMPCODE = ${
+                  req?.body?.companyCode
+                } AND PARTY = '${LPartyCode}' AND EXCODE = 'CMX' AND STDATE >= '${Format(
                   req?.body?.fromDate,
                   "YYYY/MM/DD"
                 )}' ORDER BY STDATE DESC`
@@ -531,7 +543,7 @@ const testController = {
             // LCurrCRate = 1;
             // LCurrDRate = 1;
           }
-          LRiskMApp = PartyRec.RISKMAPP;
+          LRiskMApp = partiesRecordset.RISKMAPP;
           LRiskMAmt = 0;
           LSBCTaxAmt = 0;
           LBrokAmount = 0;
@@ -557,7 +569,7 @@ const testController = {
           // check AcSt method //
           AccStAdoREC = null;
           AccStAdoREC = await adobeConnect(
-            `EXEC AcSt  @COMPCODE = ${GCompCode} ,
+            `EXEC AcSt  @COMPCODE = ${req?.body?.companyCode} ,
         ",'" +
         LTFromDate.toISOString().slice(0, 10) +
         "','" +
@@ -588,7 +600,7 @@ const testController = {
             let TRec = await adobeConnect(
               `SELECT A.ROWNO1, A.CONNO, A.QTY, A.RATE, A.CONTYPE, A.CONDATE, A.pattan 
            FROM CTR_D AS A 
-           WHERE A.COMPCODE = ${GCompCode} AND A.AC_CODE = ${LPartyCode} AND A.CONDATE BETWEEN ${req?.body?.fromDate} AND ${vcDTP2.Value} AND A.SAUDAID = ${LSaudaID}
+           WHERE A.COMPCODE = ${req?.body?.companyCode} AND A.AC_CODE = ${LPartyCode} AND A.CONDATE BETWEEN ${req?.body?.fromDate} AND ${vcDTP2.Value} AND A.SAUDAID = ${LSaudaID}
            ORDER BY A.CONDATE, A.CONNO`
             );
             while (!TRec.EOF) {
@@ -742,7 +754,7 @@ const testController = {
               MFormat === "Account Statement"
             ) {
               let LBal = Get_ClosingBal(
-                PartyRec.ACCID,
+                partiesRecordset.ACCID,
                 req?.body?.fromDate - 1
               );
               mpartyop = true;
@@ -1034,7 +1046,7 @@ const testController = {
                   "'" +
                   LSaudaCode +
                   "' AND PARTYCODE='" +
-                  PartyRec.AC_CODE +
+                  LPartyCode +
                   "' And PATTAN ='C'";
                 await AccRecSet.moveFirst();
 
@@ -1258,11 +1270,11 @@ const testController = {
                 TRec = new ADODB.Recordset(); // BROKERAGE CALCULATION
                 mysql =
                   "SELECT TOP 1 MARTYPE, MARRATE FROM PITBROK WHERE COMPCODE = " +
-                  GCompCode +
+                  req?.body?.companyCode +
                   " And UPTOSTDT >= '" +
                   Format(LTillDate, "yyyy/MM/dd") +
                   "' AND AC_CODE='" +
-                  PartyRec.AC_CODE +
+                  LPartyCode +
                   "' AND ITEMID=" +
                   LItemID +
                   " AND INSTTYPE ='" +
@@ -1274,11 +1286,11 @@ const testController = {
                   TRec = new ADODB.Recordset(); // BROKERAGE CALCULATION
                   mysql =
                     "SELECT TOP 1 MARTYPE, MARRATE FROM PEXBROK WHERE COMPCODE = " +
-                    GCompCode +
+                    req?.body?.companyCode +
                     " And UPTOSTDT >= '" +
                     Format(LTillDate, "yyyy/MM/dd") +
                     "' AND AC_CODE='" +
-                    PartyRec.AC_CODE +
+                    LPartyCode +
                     "' AND EXID =" +
                     LExID +
                     " AND INSTTYPE ='" +
@@ -1306,14 +1318,14 @@ const testController = {
                   LTillDate,
                   Math.abs(LClQty),
                   LCloseRate,
-                  PartyRec.AC_CODE,
+                  LPartyCode,
                   LCalval,
                   LAExCode
                 );
               } // LClQty
             }
           }
-          if (PartyRec.AC_CODE === LContractAcc) LMarAmt *= -1;
+          if (LPartyCode === LContractAcc) LMarAmt *= -1;
 
           if (LClQty !== 0 && LCloseRate === 0)
             if (
@@ -1383,7 +1395,7 @@ const testController = {
               TRec = new ADODB.Recordset();
               mysql =
                 "SELECT SERVICETAX, SBC_TAX, STCTAX, CGSTRATE, SGSTRATE, IGSTRATE, UTTRATE FROM EXTAX WHERE COMPCODE =" +
-                GCompCode +
+                req?.body?.companyCode +
                 " AND EXCHANGECODE = '" +
                 LAExCode +
                 "' AND FROMDT <= '" +
@@ -1415,7 +1427,7 @@ const testController = {
               TRec = new ADODB.Recordset();
               mysql =
                 "SELECT SEBITAX FROM ITEM_TAX WHERE COMPCODE =" +
-                GCompCode +
+                req?.body?.companyCode +
                 " AND ITEMID =" +
                 LItemID +
                 " AND '" +
@@ -1571,7 +1583,7 @@ const testController = {
             LRiskMAmt = Calc_RiskMFees(
               LSaudaCode,
               LAExCode,
-              PartyRec.AC_CODE.toString(),
+              LPartyCode.toString(),
               LTFromDate,
               LTillDate,
               Lmaturity,
@@ -1584,11 +1596,11 @@ const testController = {
 
           LShareAmt = 0;
 
-          if (GUniqClientId === "BRO2-CHE") {
+          if (req?.body?.GUniqClientId === "BRO2-CHE") {
             if (Check4.Value === 1) {
               LShareAmt = Calc_SharePAmt(
                 LSaudaID,
-                PartyRec.AC_CODE,
+                LPartyCode,
                 LTFromDate,
                 LTillDate
               );
@@ -1597,7 +1609,7 @@ const testController = {
             if (Check4.Value === 1) {
               LShareAmt = Calc_ShareAmt(
                 LSaudaID,
-                PartyRec.AC_CODE,
+                LPartyCode,
                 LTFromDate,
                 LTillDate
               );
@@ -1636,11 +1648,11 @@ const testController = {
           LIGSTAmt = LIGSTAmt * -1;
           LUTTAmt = LUTTAmt * -1;
 
-          if (LTotSEBITaxAmt === 0 && GUniqClientId === "BRO2-CHE") {
+          if (LTotSEBITaxAmt === 0 && req?.body?.GUniqClientId === "BRO2-CHE") {
             if (Check4.Value === 1) {
               LTotSEBITaxAmt = Calc_SharebAmt(
                 LSaudaID,
-                PartyRec.AC_CODE,
+                LPartyCode,
                 LTFromDate,
                 LTillDate
               );
@@ -1669,7 +1681,7 @@ const testController = {
             GSTDChrs = Standing_Amt(
               LSaudaCode,
               LAExCode,
-              PartyRec.AC_CODE.toString(),
+              LPartyCode.toString(),
               LTFromDate,
               LTillDate,
               Lmaturity,
@@ -1707,10 +1719,7 @@ const testController = {
             if (LInstType === "CSH" && CshMTMchk.Value === 0) {
               AccRecSet.Filter = 0;
               AccRecSet.Filter =
-                PartyRec.AC_CODE.toString() +
-                " AND SAUDACODE='" +
-                LSaudaCode +
-                "'";
+                LPartyCode.toString() + " AND SAUDACODE='" + LSaudaCode + "'";
               AccRecSet.Sort = "SRNO DESC";
               if (!AccRecSet.EOF) {
                 AccRecSet.Fields("BROKERAGE").Value = parseFloat(LBrokAmount);
@@ -2015,7 +2024,7 @@ const testController = {
           } else {
             AccRecSet.Filter = 0;
             AccRecSet.Filter =
-              "'" + PartyRec.AC_CODE + "' AND SAUDACODE='" + LSaudaCode + "'";
+              "'" + LPartyCode + "' AND SAUDACODE='" + LSaudaCode + "'";
             AccRecSet.Sort = "SRNO DESC";
             if (!AccRecSet.EOF) {
               AccRecSet.Fields("BROKERAGE").Value = LBrokAmount;
@@ -2059,7 +2068,7 @@ const testController = {
 
               mysql =
                 "SELECT A.VOU_NO,A.VOU_DT,a.AMOUNT, A.DR_CR, A.NARRATION FROM VCHAMT As A WHERE A.COMPCODE=" +
-                GCompCode +
+                req?.body?.companyCode +
                 " And A.AC_CODE        '" +
                 LPartyCode +
                 "'";
@@ -2219,7 +2228,7 @@ const testController = {
           updinterest(LPartyCode, LSaudaCode_muliple);
           // DoEvents - This function is specific to Visual Basic for Applications (VBA) and is used to allow the operating system to process other events in the queue.
           // There is no direct equivalent in JavaScript as it's not event-driven in the same way. You may not need to replicate this behavior depending on the context.
-          if (PartyRec.EOF) {
+          if (partiesRecordset.EOF) {
             flag_party(LPartyCode, LPartyName);
           }
         }
@@ -2236,7 +2245,7 @@ const testController = {
               TRecVOU = new ADODB.Recordset();
               let mysql =
                 "SELECT A.VOU_NO,A.VOU_DT,a.AMOUNT, A.DR_CR, A.NARRATION FROM VCHAMT As A WHERE A.COMPCODE=" +
-                GCompCode +
+                req?.body?.companyCode +
                 " And A.AC_CODE '" +
                 LPartyCode +
                 "'";
