@@ -569,17 +569,11 @@ const testController = {
           // check AcSt method //
           AccStAdoREC = null;
           AccStAdoREC = await adobeConnect(
-            `EXEC AcSt  @COMPCODE = ${req?.body?.companyCode} ,
-        ",'" +
-        LTFromDate.toISOString().slice(0, 10) +
-        "','" +
-        LTillDate.toISOString().slice(0, 10) +
-        "'," +
-        LSaudaID +
-        ",'" +
-        LPartyCode +
-        "'," +
-        GOnlyBrok`
+            `EXEC AcSt ${req?.body?.companyCode} , '${formatDateYYYYMMDD(
+              LTFromDate
+            )}','${formatDateYYYYMMDD(LTillDate)}',${LSaudaID},'${
+              element.AC_CODE
+            }' ,${req?.body?.GOnlyBrok}`
           );
 
           if (GOnlyBrok == 0) {
@@ -595,13 +589,13 @@ const testController = {
             }
           }
 
-          if (Check10.Value == 1) {
+          if (re?.body?.Check10.Value == 1) {
             TRec = null;
             let TRec = await adobeConnect(
               `SELECT A.ROWNO1, A.CONNO, A.QTY, A.RATE, A.CONTYPE, A.CONDATE, A.pattan 
-           FROM CTR_D AS A 
-           WHERE A.COMPCODE = ${req?.body?.companyCode} AND A.AC_CODE = ${LPartyCode} AND A.CONDATE BETWEEN ${req?.body?.fromDate} AND ${vcDTP2.Value} AND A.SAUDAID = ${LSaudaID}
-           ORDER BY A.CONDATE, A.CONNO`
+               FROM CTR_D AS A 
+               WHERE A.COMPCODE = ${req?.body?.companyCode} AND A.AC_CODE = ${LPartyCode} AND A.CONDATE BETWEEN ${req?.body?.fromDate} AND '${req?.body?.toDate}' AND A.SAUDAID = ${LSaudaID}
+               ORDER BY A.CONDATE, A.CONNO`
             );
             while (!TRec.EOF) {
               CountRec++;
@@ -682,7 +676,7 @@ const testController = {
           }
 
           if (lOpQty !== 0) {
-            if (MFormat === "Account Statement") {
+            if (req?.body?.MFormat === "Account Statement") {
               CountRec++;
               let LConType;
               let LGBrokName;

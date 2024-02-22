@@ -86,6 +86,8 @@ const Get_MaxExCondate = (exchangeId, toDate) => {
   );
 
   const rs = command.Execute();
+  const outputParamValue = command.Parameters("@LDATE").Value;
+  console.log("Output parameter value:", outputParamValue);
   return rs;
 };
 
