@@ -13,6 +13,8 @@ const testController = {
   async testStatment(req, res) {
     try {
       let LprevBal,
+        LPOPRATE,
+        LCurrFRate,
         LBal,
         LDebitAmt,
         LCreditAmt,
@@ -246,6 +248,7 @@ const testController = {
               ? "N"
               : partiesRecordset.Fields("APPLYON").Value;
         }
+
         LTillDate = new Date(req?.body?.toDate);
         LTFromDate = new Date(req?.body?.fromDate);
         LMStrDate = "";
@@ -296,7 +299,7 @@ const testController = {
 
           // if (req?.body?.confirmed || req?.body?.all) {
           //   LprevBal = partiesRecordset.OP_BAL;
-          //   if (req?.body?.Check10.Value === 0) {
+          //   if (req?.body?.req?.body?.Check10 === 0) {
           //     LBal = Net_DrCr(LPartyCode, req?.body?.fromDate);
           //     LprevBal += LBal;
           //   }
@@ -397,16 +400,26 @@ const testController = {
             }
           }
           mpusdinr = 1;
-
+          console.log(
+            `SELECT BILLBY,ACEXCODE FROM ACCT_EX WHERE COMPCODE = ${
+              req?.body?.companyCode
+            } AND AC_CODE = '${LPartyCode}' AND EXCODE = '${
+              partiesRecordset.Fields("EXCODE").Value
+            }'`
+          );
           TRec2 = null;
           TRec2 = await adobeConnect(
-            `SELECT BILLBY,ACEXCODE FROM ACCT_EX WHERE COMPCODE = ${req?.body?.companyCode} AND AC_CODE = '${LPartyCode}' AND EXCODE = '${LAExCode}'`
+            `SELECT BILLBY,ACEXCODE FROM ACCT_EX WHERE COMPCODE = ${
+              req?.body?.companyCode
+            } AND AC_CODE = '${LPartyCode}' AND EXCODE = '${
+              partiesRecordset.Fields("EXCODE").Value
+            }'`
           );
           if (!TRec2.EOF) {
-            LBillBy = TRec2.billby;
+            LBillBy = TRec2.Fields("BILLBY").Value;
           }
           TRec2 = null;
-
+          console.log("billlll", LBillBy);
           if (LAExCode == "CMX") {
             TRec = null;
             TRec = await adobeConnect(
@@ -446,7 +459,7 @@ const testController = {
             LCurrCRate = LCurrFRate;
             LCurrDRate = LCurrFRate;
           } else if (LBillBy === "P") {
-            let LPOPRATE = 0;
+            LPOPRATE = 0;
             let LPCLRATE = 0;
             TRec = null;
             TRec = await adobeConnect(
@@ -568,15 +581,16 @@ const testController = {
 
           // check AcSt method //
           AccStAdoREC = null;
+          AccStAdoREC;
           AccStAdoREC = await adobeConnect(
             `EXEC AcSt ${req?.body?.companyCode} , '${formatDateYYYYMMDD(
               LTFromDate
-            )}','${formatDateYYYYMMDD(LTillDate)}',${LSaudaID},'${
-              element.AC_CODE
-            }' ,${req?.body?.GOnlyBrok}`
+            )}','${formatDateYYYYMMDD(
+              LTillDate
+            )}',${LSaudaID},'${LPartyCode}' ,${req?.body?.GOnlyBrok}`
           );
 
-          if (GOnlyBrok == 0) {
+          if (req?.body?.GOnlyBrok == 0) {
             if (LPStmType == "R" || LPStmType == "P") {
               if (LTillDate >= GSTMDate && LTillDate < LStampDutyDate) {
                 LNStmAmt = Get_StampDutyAmt(
@@ -589,7 +603,7 @@ const testController = {
             }
           }
 
-          if (re?.body?.Check10.Value == 1) {
+          if (req?.body?.Check10 == 1) {
             TRec = null;
             let TRec = await adobeConnect(
               `SELECT A.ROWNO1, A.CONNO, A.QTY, A.RATE, A.CONTYPE, A.CONDATE, A.pattan 
@@ -691,7 +705,7 @@ const testController = {
                 LDiffAmt = Math.abs(lOpQty) * LOpenRate * LCalval;
               }
 
-              if (Check10.Value === 1) {
+              if (req?.body?.Check10 === 1) {
                 LRptGrp = 2;
               } else {
                 LRptGrp = 1;
@@ -710,7 +724,9 @@ const testController = {
               }
               LGBrokRate = String(LBrokRate.toFixed(4));
 
-              if (!(Check12.Value === 1 && MFormat === "Account Statement")) {
+              if (
+                !(req?.body?.Check12 === 1 && MFormat === "Account Statement")
+              ) {
                 Add_To_AccRecSet(
                   LRptGrp,
                   CountRec,
@@ -737,14 +753,14 @@ const testController = {
           }
 
           if (
-            Check12.Value === 1 &&
+            req?.body?.Check12 === 1 &&
             !mpartyop &&
             MFormat === "Account Statement"
           ) {
             if (
-              Check10.Value === 1 &&
+              req?.body?.Check10 === 1 &&
               Option5.Value &&
-              Check12.Value === 1 &&
+              req?.body?.Check12 === 1 &&
               MFormat === "Account Statement"
             ) {
               let LBal = Get_ClosingBal(
@@ -778,7 +794,7 @@ const testController = {
             TRec.Filter =
               "CONDATE >= '" + LTFromDate.toISOString().slice(0, 10) + "'";
           } else {
-            if (Check12.Value === 0) {
+            if (req?.body?.Check12 === 0) {
               TRec.Filter = "B'";
             }
           }
@@ -874,7 +890,7 @@ const testController = {
               if (LBrokType === "R") LBrokQty2 = LBrokLot;
               if (LBrokType === "5") LBrokQty2 = LBrokLot;
 
-              if (GCINNo === "2000" || Check12.Value === 1) {
+              if (GCINNo === "2000" || req?.body?.Check12 === 1) {
                 if (!CONTYPE === "B") {
                   if (LBrokType === "O" || LBrokType === "C")
                     LBrokQty = Get_BrokQty(LBrokType, LBalQty, "B", !QTY);
@@ -992,7 +1008,7 @@ const testController = {
                       ? "Transaction Wise"
                       : "Opening Sauda";
                   LGBrokRate = LBrokRate.toFixed(4);
-                  if (!(PATTAN !== "C" && Check12.Value === 1)) {
+                  if (!(PATTAN !== "C" && req?.body?.Check12 === 1)) {
                     Add_To_AccRecSet(
                       LRptGrp,
                       CountRec,
@@ -1027,7 +1043,7 @@ const testController = {
 
           //Add converted code hear
 
-          if (Check12.Value === 0) {
+          if (req?.body?.Check12 === 0) {
             if (GCINNo !== "2000") {
               let TRec = await AccStAdoREC.clone();
               TRec.filter = "'S'";
@@ -1736,7 +1752,7 @@ const testController = {
                 AccRecSet.Fields("DEBITAMT").Value = LNetRecdPay;
                 AccRecSet.Fields("CREDITAMT").Value = LNetMargin;
                 AccRecSet.Fields("SHAREAMT").Value = LShareAmt;
-                if (Check12.Value === 0) {
+                if (req?.body?.Check12 === 0) {
                   AccRecSet.Fields("CGSTAMT").Value = LCGSTAmt;
                   AccRecSet.Fields("SGSTAMT").Value = LSGSTAmt;
                 }
@@ -1744,7 +1760,7 @@ const testController = {
                 AccRecSet.Fields("UTTAMT").Value = LUTTAmt;
                 AccRecSet.Update();
               } else {
-                if (Check10.Value === 1) {
+                if (req?.body?.Check10 === 1) {
                   if (
                     lOpQty !== 0 ||
                     LClQty !== 0 ||
@@ -1815,7 +1831,7 @@ const testController = {
                     AccRecSet.Fields("BrokRate").Value = LBrokRate;
                     AccRecSet.Fields("MarRate").Value = LMarRate;
                     AccRecSet.Fields("BrokType").Value = LBrokType;
-                    if (Check12.Value === 0) {
+                    if (req?.body?.Check12 === 0) {
                       AccRecSet.Fields("CGSTAMT").Value = LCGSTAmt;
                       AccRecSet.Fields("SGSTAMT").Value = LSGSTAmt;
                     }
@@ -1847,14 +1863,14 @@ const testController = {
                   Math.abs(parseFloat(lOpQty)) !==
                 0
               ) {
-                if (Check12.Value === 0) {
+                if (req?.body?.Check12 === 0) {
                   AccRecSet.AddNew();
                   mstanding = true;
                   CountRec = CountRec + 1;
                   AccRecSet.Fields("SRNO").Value = CountRec;
                   AccRecSet.Fields("BILLNO").Value = LSetNo;
                   AccRecSet.Fields("SAUDACODE").Value = LSaudaCode;
-                  if (Check10.Value === 1) {
+                  if (req?.body?.Check10 === 1) {
                     AccRecSet.Fields("RPTGRP").Value = 2;
                   } else {
                     AccRecSet.Fields("RPTGRP").Value = 1;
@@ -1882,7 +1898,7 @@ const testController = {
                   AccRecSet.Fields("SBROKRATE").Value = LBrokRate;
                   AccRecSet.Fields("BrokType").Value = LBrokType;
                   AccRecSet.Fields("SBROKType").Value = LBrokType;
-                  if (Check12.Value === 0) {
+                  if (req?.body?.Check12 === 0) {
                     AccRecSet.Fields("CGSTAMT").Value = parseFloat(LCGSTAmt);
                     AccRecSet.Fields("SGSTAMT").Value = parseFloat(LSGSTAmt);
                   }
@@ -2041,7 +2057,7 @@ const testController = {
               AccRecSet.Fields("DEBITAMT").Value = LNetRecdPay;
               AccRecSet.Fields("CREDITAMT").Value = LNetMargin;
               AccRecSet.Fields("SHAREAMT").Value = LShareAmt;
-              if (Check12.Value === 0) {
+              if (req?.body?.Check12 === 0) {
                 AccRecSet.Fields("CGSTAMT").Value = LCGSTAmt;
                 AccRecSet.Fields("SGSTAMT").Value = LSGSTAmt;
               }
@@ -2050,11 +2066,15 @@ const testController = {
               AccRecSet.Update();
             }
           }
-          if (Check10.Value === 1) {
+          if (req?.body?.Check10 === 1) {
             TRec = null;
           }
           // >>> account statement report grouping
-          if (Check10.Value === 1 && Option5.Value && Check12.Value === 0) {
+          if (
+            req?.body?.Check10 === 1 &&
+            Option5.Value &&
+            req?.body?.Check12 === 0
+          ) {
             // If LedgerFlag = True Then ''>>> account statement report grouping
             if (LedgerFlag === false) {
               TRec = null;
@@ -2139,7 +2159,7 @@ const testController = {
           }
           CFlag = false;
           if (Check9.Value === 1) {
-            if (Check12.Value === 0) {
+            if (req?.body?.Check12 === 0) {
               if (
                 Math.abs(parseFloat(LTotBuyQty)) +
                   Math.abs(LTotSellQty) +
@@ -2148,7 +2168,7 @@ const testController = {
                 0
               ) {
                 if (
-                  (Check10.Value === 1 && LCloseRate > 0) ||
+                  (req?.body?.Check10 === 1 && LCloseRate > 0) ||
                   Check9.Value === 1
                 ) {
                   AccRecSet.AddNew();
@@ -2157,7 +2177,7 @@ const testController = {
                   AccRecSet.Fields("EXCODE").Value = LAExCode;
 
                   // old
-                  if (Check10.Value === 1) {
+                  if (req?.body?.Check10 === 1) {
                     AccRecSet.Fields("RPTGRP").Value = 4;
                   } else {
                     AccRecSet.Fields("RPTGRP").Value = 3;
@@ -2229,9 +2249,9 @@ const testController = {
         if (TempPart !== LPartyCode) {
           TempPart = LPartyCode;
           if (
-            Check10.Value === 1 &&
+            req?.body?.Check10 === 1 &&
             Option5.Value &&
-            Check12.Value === 1 &&
+            req?.body?.Check12 === 1 &&
             MFormat === "Account Statement"
           ) {
             if (LedgerFlag === false) {

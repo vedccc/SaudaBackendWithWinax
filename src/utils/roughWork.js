@@ -2035,4 +2035,278 @@ const genrateBillSummary = async (req) => {
   // Party Loop Start //
 };
 
+if (!AccStAdoREC.EOF) {
+  // Move to the first record if not already there
+  AccStAdoREC.MoveFirst();
+
+  // Iterate over all records
+  while (!AccStAdoREC.EOF) {
+    // Iterate over all fields in the current record
+    for (var i = 0; i < AccStAdoREC.Fields.Count; i++) {
+      // Log the name and value of each field
+      console.log(
+        "terssopppppppppp",
+        AccStAdoREC.Fields(i).Name + ": " + AccStAdoREC.Fields(i).Value
+      );
+    }
+
+    // Move to the next record
+    AccStAdoREC.MoveNext();
+  }
+} else {
+  console.log("Recordset is empty.");
+}
+
+const Get_MaxExCondate = (exchangeId, toDate) => {
+  const lop = `'0'`;
+
+  let connection = new winax.Object("ADODB.Connection");
+  connection.Open(connectionString);
+  const command = new winax.Object("ADODB.Command");
+  command.CommandType = ADODB.CommandTypeEnum.adCmdStoredProc;
+  command.CommandText = "Get_MaxExCondate";
+  command.ActiveConnection = connection;
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@MC_CODE",
+      ADODB.DataTypeEnum.adInteger,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      1005
+    )
+  );
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@EXID",
+      ADODB.DataTypeEnum.adInteger,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      exchangeId
+    )
+  );
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@TODATE",
+      ADODB.DataTypeEnum.adDBTimeStamp,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      toDate
+    )
+  );
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@LDATE",
+      ADODB.DataTypeEnum.adVarChar,
+      ADODB.ParameterDirectionEnum.adParamOutput,
+      20,
+      `@LDATE OUTPUT`
+    )
+  );
+
+  // const rs = new ActiveXObject("ADODB.Recordset");
+  // rs.Open(command);
+  const rs = command.Execute();
+  console.log("command.Parameters", command.Parameters("@LDATE").Value);
+  return rs;
+};
+
+const Get_MaxExCondate2 = (exchangeId, toDate) => {
+  const lop = "0"; // Ensure lop is a string without extra quotes
+
+  let connection = new ActiveXObject("ADODB.Connection");
+  connection.Open(connectionString);
+
+  const command = new ActiveXObject("ADODB.Command");
+  command.ActiveConnection = connection;
+  command.CommandType = ADODB.CommandTypeEnum.adCmdStoredProc;
+  command.CommandText = "Get_MaxExCondate";
+
+  // Sample values for parameters
+  const MC_CODE = 1005; // Sample value for @MC_CODE
+  const EXID = exchangeId; // Exchange ID passed as argument
+  const TODATE = toDate; // Date passed as argument
+
+  // Input parameters
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@MC_CODE",
+      ADODB.DataTypeEnum.adInteger,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      MC_CODE
+    )
+  );
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@EXID",
+      ADODB.DataTypeEnum.adInteger,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      EXID
+    )
+  );
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@TODATE",
+      ADODB.DataTypeEnum.adDBTimeStamp,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      TODATE
+    )
+  );
+
+  // Output parameter
+  const outputParam = command.CreateParameter(
+    "@LDATE",
+    ADODB.DataTypeEnum.adVarChar,
+    ADODB.ParameterDirectionEnum.adParamOutput,
+    20
+  );
+  command.Parameters.Append(outputParam);
+
+  command.Execute();
+
+  // Retrieve the value of the output parameter
+  const outputValue = outputParam.Value;
+
+  connection.Close();
+
+  return outputValue;
+};
+
+const Get_MaxExCondate3 = (exchangeId, toDate) => {
+  const lop = "0"; // Ensure lop is a string without extra quotes
+
+  let connection = new ActiveXObject("ADODB.Connection");
+  connection.Open(connectionString);
+
+  const command = new ActiveXObject("ADODB.Command");
+  command.ActiveConnection = connection;
+  command.CommandType = ADODB.CommandTypeEnum.adCmdStoredProc;
+  command.CommandText = "Get_MaxExCondate";
+
+  // Input parameters
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@MC_CODE",
+      ADODB.DataTypeEnum.adInteger,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      generateMC_CODE()
+    )
+  );
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@EXID",
+      ADODB.DataTypeEnum.adInteger,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      exchangeId
+    )
+  );
+  command.Parameters.Append(
+    command.CreateParameter(
+      "@TODATE",
+      ADODB.DataTypeEnum.adDBTimeStamp,
+      ADODB.ParameterDirectionEnum.adParamInput,
+      -1,
+      formatDateYYYYMMDD(toDate)
+    )
+  );
+
+  // Output parameter
+  const outputParam = command.CreateParameter(
+    "@LDATE",
+    ADODB.DataTypeEnum.adVarChar,
+    ADODB.ParameterDirectionEnum.adParamOutput,
+    20
+  );
+  command.Parameters.Append(outputParam);
+
+  command.Execute();
+
+  // Retrieve the value of the output parameter
+  const outputValue = outputParam.Value;
+
+  connection.Close();
+
+  return outputValue;
+};
+
+const Get_MaxExCondate4 = (exchangeId, toDate) => {
+  try {
+    toDate = formatDateYYYYMMDD(toDate);
+    const lop = "0";
+
+    let connection = new winax.Object("ADODB.Connection");
+    connection.Open(connectionString);
+
+    const command = new winax.Object("ADODB.Command");
+    command.CommandType = ADODB.CommandTypeEnum.adCmdStoredProc;
+    command.CommandText = "Get_MaxExCondate";
+    command.ActiveConnection = connection;
+
+    command.Parameters.Append(
+      command.CreateParameter(
+        "@MC_CODE",
+        ADODB.DataTypeEnum.adInteger,
+        ADODB.ParameterDirectionEnum.adParamInput,
+        -1,
+        1005
+      )
+    );
+    command.Parameters.Append(
+      command.CreateParameter(
+        "@EXID",
+        ADODB.DataTypeEnum.adInteger,
+        ADODB.ParameterDirectionEnum.adParamInput,
+        -1,
+        exchangeId
+      )
+    );
+    command.Parameters.Append(
+      command.CreateParameter(
+        "@TODATE",
+        ADODB.DataTypeEnum.adDBTimeStamp,
+        ADODB.ParameterDirectionEnum.adParamInput,
+        -1,
+        toDate
+      )
+    );
+    command.Parameters.Append(
+      command.CreateParameter(
+        "@LDATE",
+        ADODB.DataTypeEnum.adVarChar,
+        ADODB.ParameterDirectionEnum.adParamOutput,
+        20,
+        lop
+      )
+    );
+
+    const rs = command.Execute();
+    const ldate = command.Parameters("@LDATE").Value; // Retrieve the value of the output parameter
+
+    console.log("ldate:", ldate); // Log the value of ldate
+
+    connection.Close(); // Close the connection
+
+    return ldate;
+  } catch (error) {
+    console.error("Error occurred:", error.message);
+    return null; // or handle the error appropriately
+  }
+};
+
+// Function to generate the value for MC_CODE parameter
+const generateMC_CODE = () => {
+  // Your logic to generate MC_CODE dynamically
+  return 1005; // For example, returning a static value here
+};
+
+// Function to format date to YYYYMMDD format
+const formatDateYYYYMMDD = (date) => {
+  // Your logic to format date to YYYYMMDD
+  return date.toISOString().slice(0, 10).replace(/-/g, ""); // For example, using ISO string format
+};
+
 module.exports = { partyList };
