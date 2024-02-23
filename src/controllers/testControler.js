@@ -7,6 +7,9 @@ const {
   formatDateYYYYMMDD,
   SDCLRATE,
   Get_MaxExCondate,
+  adobeConnect3,
+  calcBrokerage,
+  standingAmt,
 } = require("../utils/utils");
 
 const testController = {
@@ -581,9 +584,9 @@ const testController = {
 
           // check AcSt method //
           AccStAdoREC = null;
-          AccStAdoREC;
+
           AccStAdoREC = await adobeConnect(
-            `EXEC AcSt ${req?.body?.companyCode} , '${formatDateYYYYMMDD(
+            `EXEC AcSt ${req?.body?.companyCode},'${formatDateYYYYMMDD(
               LTFromDate
             )}','${formatDateYYYYMMDD(
               LTillDate
@@ -788,9 +791,9 @@ const testController = {
           // Bought incertion //
           TRec = null;
           TRec = new ActiveXObject("ADODB.Recordset");
-          TRec = AccStAdoREC.Clone();
+          TRec = AccStAdoREC;
 
-          if (GCINNo === "2000") {
+          if (req?.body.GCINNo === "2000") {
             TRec.Filter =
               "CONDATE >= '" + LTFromDate.toISOString().slice(0, 10) + "'";
           } else {
@@ -799,88 +802,118 @@ const testController = {
             }
           }
 
-          if (!TRec.EOF) {
-            if (loopdate === "01/01/1900") {
-              loopdate = TRec.Fields("Condate").Value;
-            }
+          if (!TRec.EOF && loopdate === "01/01/1900") {
+            loopdate = TRec.Fields("Condate").Value;
           }
 
           while (!TRec.EOF) {
             LCBrokAmt = 0;
             LcTranAmt = 0;
 
-            LBrokType = IsNull(!broktype) ? "T" : !broktype;
-            LBrokRate2 = parseFloat(!BROKRATE2 || 0);
-            LBrokQty = IsNull(!BROKQTY) ? 0 : !BROKQTY;
-            LBrokRate = parseFloat(!brokrate || 0);
-            LBrokQty2 = IsNull(!BROKQTY2) ? 0 : !BROKQTY2;
+            LBrokType = TRec.Fields("BROKTYPE").Value
+              ? TRec.Fields("BROKTYPE").Value
+              : "T";
+            LBrokRate2 = parseFloat(TRec.Fields("BROKRATE2").Value) || 0;
+            LBrokQty =
+              TRec.Fields("BROKQTY").Value != null
+                ? TRec.Fields("BROKQTY").Value
+                : 0;
+            LBrokRate = parseFloat(TRec.Fields("BROKRATE").Value) || 0;
+            LBrokQty2 =
+              TRec.Fields("BROKQTY2").Value != null
+                ? TRec.Fields("BROKQTY2").Value
+                : 0;
 
-            if (!IsNull(!ORDNO)) {
-              if (!ORDNO === "Carry") {
+            if (TRec.Fields("ORDNO").Value != null) {
+              if (TRec.Fields("ORDNO").Value !== "Carry") {
                 LBrokRate = LBrokRate2;
               }
             }
 
-            if (GOnlyBrok === 0) {
-              LTranRate = parseFloat(!TRANRATE || 0);
-              LATranType = IsNull(!TRANTYPE) ? "T" : !TRANTYPE;
-              MSrvTax = parseFloat(!SRVTAX || 0);
-              LSBCTax = parseFloat(!SBC_TAX || 0);
-              LCGSTRate = parseFloat(!CGSTRATE || 0);
-              LSGSTRate = parseFloat(!SGSTRATE || 0);
-              LIGSTRate = parseFloat(!IGSTRATE || 0);
-              LUTTRate = parseFloat(!UTTRATE || 0);
-              LSEBITax = parseFloat(!SEBITAX || 0);
-              LSTTRate = parseFloat(!STTRATE || 0);
-              LEQSTTRate = parseFloat(!EQ_STT || 0);
-              LEQSTMRate = parseFloat(!EQ_STAMP || 0);
+            if (req?.body?.GOnlyBrok === 0) {
+              LTranRate = parseFloat(TRec.Fields("TRANRATE").Value) || 0;
+              LATranType =
+                TRec.Fields("TRANTYPE").Value != null
+                  ? TRec.Fields("TRANTYPE").Value
+                  : "T";
+              MSrvTax = parseFloat(TRec.Fields("SRVTAX").Value) || 0;
+              LSBCTax = parseFloat(TRec.Fields("SBC_TAX").Value) || 0;
+              LCGSTRate = parseFloat(TRec.Fields("CGSTRATE").Value) || 0;
+              LSGSTRate = parseFloat(TRec.Fields("SGSTRATE").Value) || 0;
+              LIGSTRate = parseFloat(TRec.Fields("IGSTRATE").Value) || 0;
+              LUTTRate = parseFloat(TRec.Fields("UTTRATE").Value) || 0;
+              LSEBITax = parseFloat(TRec.Fields("SEBITAX").Value) || 0;
+              LSTTRate = parseFloat(TRec.Fields("STTRATE").Value) || 0;
+              LEQSTTRate = parseFloat(TRec.Fields("EQ_STT").Value) || 0;
+              LEQSTMRate = parseFloat(TRec.Fields("EQ_STAMP").Value) || 0;
 
               if (
-                !CONDATE >= GSTMDate &&
-                !CONDATE < LStampDutyDate &&
+                TRec.Fields("CONDATE").Value >= GSTMDate &&
+                TRec.Fields("CONDATE").Value < LStampDutyDate &&
                 (LPStmType === "R" || LPStmType === "P")
               ) {
                 LStmRate = 0;
               } else {
-                LStmRate = parseFloat(!STMRATE || 0);
-                LEQSTMRate = parseFloat(!EQ_STAMP || 0);
+                LStmRate = parseFloat(TRec.Fields("STMRATE").Value) || 0;
+                LEQSTMRate = parseFloat(TRec.Fields("EQ_STAMP").Value) || 0;
               }
             }
 
-            if (!PATTAN !== "C") {
-              if (GCINNo === "2000") {
-                if (!CONTYPE === "B") {
-                  lOpQty += !QTY;
-                  LTotOpAmt += !QTY * !Rate * LCalval;
+            if (TRec.Fields("PATTAN").Value !== "C") {
+              if (req?.body?.GCINNo === "2000") {
+                if (TRec.Fields("CONTYPE").Value === "B") {
+                  lOpQty += TRec.Fields("QTY").Value;
+                  LTotOpAmt +=
+                    TRec.Fields("QTY").Value *
+                    TRec.Fields("RATE").Value *
+                    LCalval;
                   LBalQty = lOpQty;
                 } else {
-                  lOpQty -= !QTY;
-                  LTotOpAmt -= !QTY * !Rate * LCalval;
+                  lOpQty -= TRec.Fields("QTY").Value;
+                  LTotOpAmt -=
+                    TRec.Fields("QTY").Value *
+                    TRec.Fields("RATE").Value *
+                    LCalval;
                   LBalQty = lOpQty;
                 }
               } else {
                 if (!CONTYPE === "B") {
-                  lOpQty += !QTY;
-                  LTotOpAmt += !QTY * !Rate * LCalval;
+                  lOpQty += TRec.Fields("QTY").Value;
+                  LTotOpAmt +=
+                    TRec.Fields("QTY").Value *
+                    TRec.Fields("RATE").Value *
+                    LCalval;
                   LBalQty = lOpQty;
                 } else {
-                  lOpQty -= !QTY;
-                  LTotOpAmt -= !QTY * !Rate * LCalval;
+                  lOpQty -= TRec.Fields("QTY").Value;
+                  LTotOpAmt -=
+                    TRec.Fields("QTY").Value *
+                    TRec.Fields("RATE").Value *
+                    LCalval;
                   LBalQty = lOpQty;
                 }
               }
               LNetPosition = lOpQty;
             } else {
-              if (GCINNo === "2000") {
-                if (!CONTYPE === "B") {
-                  LBuyAmt = !QTY * !Rate * LCalval;
+              if (req?.body?.GCINNo === "2000") {
+                if (TRec.Fields("CONTYPE").Value === "B") {
+                  LBuyAmt =
+                    TRec.Fields("QTY").Value *
+                    TRec.Fields("RATE").Value *
+                    LCalval;
                   LTotBuyAmt += LBuyAmt;
                 } else {
-                  LSellAmt = !QTY * !Rate * LCalval;
+                  LSellAmt =
+                    TRec.Fields("QTY").Value *
+                    TRec.Fields("RATE").Value *
+                    LCalval;
                   LTotSellAmt += LSellAmt;
                 }
               } else {
-                LBuyAmt = !QTY * !Rate * LCalval;
+                LBuyAmt =
+                  TRec.Fields("QTY").Value *
+                  TRec.Fields("RATE").Value *
+                  LCalval;
                 LTotBuyAmt += LBuyAmt;
                 LTotBQAmt += LBuyAmt;
               }
@@ -890,17 +923,27 @@ const testController = {
               if (LBrokType === "R") LBrokQty2 = LBrokLot;
               if (LBrokType === "5") LBrokQty2 = LBrokLot;
 
-              if (GCINNo === "2000" || req?.body?.Check12 === 1) {
+              if (req?.body?.GCINNo === "2000" || req?.body?.Check12 === 1) {
                 if (!CONTYPE === "B") {
                   if (LBrokType === "O" || LBrokType === "C")
-                    LBrokQty = Get_BrokQty(LBrokType, LBalQty, "B", !QTY);
-                  LBalQty += !QTY;
-                  LTotBuyQty += !QTY;
+                    LBrokQty = Get_BrokQty(
+                      LBrokType,
+                      LBalQty,
+                      "B",
+                      TRec.Fields("QTY").Value
+                    );
+                  LBalQty += TRec.Fields("QTY").Value;
+                  LTotBuyQty += TRec.Fields("QTY").Value;
                 } else {
                   if (LBrokType === "O" || LBrokType === "C")
-                    LBrokQty = Get_BrokQty(LBrokType, LBalQty, "S", !QTY);
-                  LBalQty += !QTY;
-                  LTotSellQty += !QTY;
+                    LBrokQty = Get_BrokQty(
+                      LBrokType,
+                      LBalQty,
+                      "S",
+                      TRec.Fields("QTY").Value
+                    );
+                  LBalQty += TRec.Fields("QTY").Value;
+                  LTotSellQty += TRec.Fields("QTY").Value;
                 }
               } else {
                 if (
@@ -909,18 +952,22 @@ const testController = {
                   LBrokType === "A" ||
                   LBrokType === "5"
                 )
-                  LBrokQty = Get_BrokQty(LBrokType, LBalQty, "B", !QTY);
-                LBalQty += !QTY;
-                LTotBuyQty += !QTY;
+                  LBrokQty = Get_BrokQty(
+                    LBrokType,
+                    LBalQty,
+                    "B",
+                    TRec.Fields("QTY").Value
+                  );
+                LBalQty += TRec.Fields("QTY").Value;
+                LTotBuyQty += TRec.Fields("QTY").Value;
               }
-
-              LCBrokAmt = Calc_Brokerage(
+              LCBrokAmt = calcBrokerage(
                 LBrokType,
                 LBrokRate,
                 LBrokRate2,
                 LBrokQty,
-                !QTY,
-                !Rate,
+                TRec.Fields("QTY").Value,
+                TRec.Fields("RATE").Value,
                 LCalval,
                 LInstType,
                 LStrike,
@@ -937,7 +984,7 @@ const testController = {
 
               LBrokAmount += LCBrokAmt;
 
-              if (GOnlyBrok === 0) {
+              if (req?.body?.GOnlyBrok === 0) {
                 if (LInstType === "CSH") {
                   LStmAmt =
                     (LStmRate / 100) * ((!QTY - LBrokQty2) * !Rate * LCalval);
@@ -994,7 +1041,7 @@ const testController = {
                 }
               }
 
-              if (MFormat === "Account Statement") {
+              if (req?.body?.MFormat === "Account Statement") {
                 CountRec++;
                 if (
                   LBrokType === "P" ||
@@ -1044,12 +1091,16 @@ const testController = {
           //Add converted code hear
 
           if (req?.body?.Check12 === 0) {
-            if (GCINNo !== "2000") {
+            if (req?.body?.GCINNo !== "2000") {
               let TRec = await AccStAdoREC.clone();
               TRec.filter = "'S'";
               await TRec.moveFirst();
 
               while (!TRec.EOF) {
+                console.log(
+                  "LBrokQty2====================================>",
+                  LBrokQty2
+                );
                 AccRecSet.filter = adFilterNone;
                 AccRecSet.sort = "SRNO ASC";
                 AccRecSet.filter =
@@ -1183,9 +1234,9 @@ const testController = {
 
           // CLOSING CALC
           if (
-            MFormat === "Bill Summary" ||
-            MFormat === "Bill Summary With Sharing" ||
-            MFormat === "Account Statement Summary"
+            req?.body?.MFormat === "Bill Summary" ||
+            req?.body?.MFormat === "Bill Summary With Sharing" ||
+            req?.body?.MFormat === "Account Statement Summary"
           ) {
             if (LTotOpAmt > 0) {
               LTotBuyAmt += LTotOpAmt;
@@ -1197,7 +1248,7 @@ const testController = {
           // LClQty calculation
           LClQty =
             LNetPosition + parseFloat((LTotBuyQty - LTotSellQty).toFixed(2));
-
+          console.log("LClQty=======================>", LClQty);
           if (
             LInstType === "OPT" &&
             OptMTMChk.Value === 0 &&
@@ -1271,7 +1322,7 @@ const testController = {
               LClQty = 0;
             }
           }
-          if (Option1.Value === true) {
+          if (req?.body?.Option1 === true) {
             if (LTillDate < Lmaturity) {
               if (LClQty !== 0) {
                 LMarRate = 0;
@@ -1579,7 +1630,7 @@ const testController = {
           LSTTRate = 0;
           LSTTAmt = 0;
 
-          if (GRoundOff === "Y") {
+          if (req?.body?.GRoundOff === "Y") {
             LTranAmount = Math.round(LTranAmount) * -1;
             LBrokAmount = Math.round(LBrokAmount) * -1;
             LTotSEBITaxAmt = Math.round(LTotSEBITaxAmt) * -1;
@@ -1607,7 +1658,7 @@ const testController = {
           LShareAmt = 0;
 
           if (req?.body?.GUniqClientId === "BRO2-CHE") {
-            if (Check4.Value === 1) {
+            if (req?.body?.Check4 === 1) {
               LShareAmt = Calc_SharePAmt(
                 LSaudaID,
                 LPartyCode,
@@ -1616,7 +1667,7 @@ const testController = {
               );
             }
           } else {
-            if (Check4.Value === 1) {
+            if (req?.body?.Check4 === 1) {
               LShareAmt = Calc_ShareAmt(
                 LSaudaID,
                 LPartyCode,
@@ -1687,8 +1738,8 @@ const testController = {
             LBrokAmount = LBrokAmount * -1;
           }
 
-          if (GStandingYN === "Y") {
-            GSTDChrs = Standing_Amt(
+          if (req?.body?.GStandingYN === "Y") {
+            GSTDChrs = standingAmt(
               LSaudaCode,
               LAExCode,
               LPartyCode.toString(),
@@ -1699,7 +1750,7 @@ const testController = {
               LSaudaID
             );
           }
-          if (GRoundOff === "Y") {
+          if (req?.body?.GRoundOff === "Y") {
             GSTDChrs = Math.round(GSTDChrs);
           }
           GSrvTax = -1 * GSrvTax;
@@ -1714,9 +1765,9 @@ const testController = {
               }
             }
             if (
-              MFormat === "Bill Summary" ||
-              MFormat === "Bill Summary With Sharing" ||
-              MFormat === "Account Statement Summary"
+              req?.body?.MFormat === "Bill Summary" ||
+              req?.body?.MFormat === "Bill Summary With Sharing" ||
+              req?.body?.MFormat === "Account Statement Summary"
             ) {
               LCloseAmt = Math.abs(parseFloat(LClQty)) * LCloseRate * LCalval;
               if (LClQty > 0) {
@@ -2087,7 +2138,7 @@ const testController = {
                 LPartyCode +
                 "'";
               mysql +=
-                " And VOU_TYPE <>        'S' AND A.VOU_DT >='" +
+                " And VOU_TYPE <> 'S' AND A.VOU_DT >='" +
                 Format(req?.body?.fromDate, "YYYY/MM/DD") +
                 "' AND A.VOU_DT <='" +
                 Format(vcDTP2.Value, "YYYY/MM/DD") +
@@ -2158,7 +2209,7 @@ const testController = {
             }
           }
           CFlag = false;
-          if (Check9.Value === 1) {
+          if (req?.body?.Check9 === 1) {
             if (req?.body?.Check12 === 0) {
               if (
                 Math.abs(parseFloat(LTotBuyQty)) +
