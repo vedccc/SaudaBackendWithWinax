@@ -2375,3 +2375,91 @@ let {
   STMRATE,
   PATTAN,
 } = TRec.Fields;
+
+// // Bought incertion //
+// if (req?.body.GCINNo === "2000") {
+//   TRec.Filter =
+//     "CONDATE >= '" + LTFromDate.toISOString().slice(0, 10) + "'";
+// } else {
+//   if (req?.body?.Check12 === 0) {
+//     TRec.Filter = "B'";
+//   }
+// }
+
+// if (!TRec.EOF && loopdate === "01/01/1900") {
+//   loopdate = TRec.Fields("Condate").Value;
+// }
+
+// CFlag = false;
+
+// // End Bought incertion //
+
+while (!TRec.EOF) {
+  console.log("LBrokQty2====================================>", LBrokQty2);
+  AccRecSet.filter = adFilterNone;
+  AccRecSet.sort = "SRNO ASC";
+  AccRecSet.filter =
+    "'" + SAUDACODE + "' AND PARTYCODE='" + AC_CODE + "' And PATTAN ='C'";
+  await AccRecSet.moveFirst();
+
+  while (!AccRecSet.EOF) {}
+}
+
+// b
+
+if (req?.body?.GOnlyBrok === 0) {
+  LTranRate = parseFloat(TRec.Fields("TRANRATE").Value) || 0;
+  LATranType =
+    TRec.Fields("TRANTYPE").Value != null ? TRec.Fields("TRANTYPE").Value : "T";
+  MSrvTax = parseFloat(TRec.Fields("SRVTAX").Value) || 0;
+  LSBCTax = parseFloat(TRec.Fields("SBC_TAX").Value) || 0;
+  LCGSTRate = parseFloat(TRec.Fields("CGSTRATE").Value) || 0;
+  LSGSTRate = parseFloat(TRec.Fields("SGSTRATE").Value) || 0;
+  LIGSTRate = parseFloat(TRec.Fields("IGSTRATE").Value) || 0;
+  LUTTRate = parseFloat(TRec.Fields("UTTRATE").Value) || 0;
+  LSEBITax = parseFloat(TRec.Fields("SEBITAX").Value) || 0;
+  LSTTRate = parseFloat(TRec.Fields("STTRATE").Value) || 0;
+  LEQSTTRate = parseFloat(TRec.Fields("EQ_STT").Value) || 0;
+  LEQSTMRate = parseFloat(TRec.Fields("EQ_STAMP").Value) || 0;
+
+  if (
+    TRec.Fields("CONDATE").Value >= GSTMDate &&
+    TRec.Fields("CONDATE").Value < LStampDutyDate &&
+    (APPLYON === "R" || APPLYON === "P")
+  ) {
+    LStmRate = 0;
+  } else {
+    LStmRate = parseFloat(TRec.Fields("STMRATE").Value) || 0;
+    LEQSTMRate = parseFloat(TRec.Fields("EQ_STAMP").Value) || 0;
+  }
+}
+
+// s
+if (GOnlyBrok === 0) {
+  let LATranType = TRec.TRANTYPE === null ? "T" : TRec.TRANTYPE;
+  let LTranRate = parseFloat(TRec.TRANRATE);
+
+  if (
+    TRec.Condate >= GSTMDate &&
+    TRec.Condate < LStampDutyDate &&
+    (APPLYON === "R" || APPLYON === "P")
+  ) {
+    LStmRate = 0;
+  } else {
+    LStmRate = parseFloat(TRec.STMRATE);
+  }
+
+  LStmRate = parseFloat(TRec.STMRATE);
+  LEQSTTRate = parseFloat(TRec.EQ_STT);
+  LEQSTMRate = parseFloat(TRec.EQ_STAMP);
+  LSTTRate = parseFloat(TRec.STTRATE);
+  LSEBITax = parseFloat(TRec.SEBITAX);
+  MSrvTax = parseFloat(TRec.SRVTAX);
+  LSBCTax = parseFloat(TRec.SBC_TAX);
+  LCGSTRate = parseFloat(TRec.CGSTRATE);
+  LSGSTRate = parseFloat(TRec.SGSTRATE);
+  LIGSTRate = parseFloat(TRec.IGSTRATE);
+  LUTTRate = parseFloat(TRec.UTTRATE);
+  LSEBITax = parseFloat(TRec.SEBITAX);
+  LSTTRate = parseFloat(TRec.STTRATE);
+}

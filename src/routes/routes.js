@@ -1,8 +1,8 @@
 const express = require("express");
+const reportController = require("../controllers/reportController");
 const router = express.Router();
 // const partyController = require("../controllers/partyController");
 // const companyController = require("../controllers/companyController");
-const testController = require("../controllers/testControler");
 
 // // parties
 // router.get("/getPartiesBySelection", partyController.getPartiesBySelection);
@@ -12,6 +12,6 @@ const testController = require("../controllers/testControler");
 // router.get("/getAllCompanies", companyController.getAllCompanies);
 
 // test
-router.get("/test", testController.testStatment);
+router.get("/billSumary", reportController.billSummary);
 
 module.exports = router;
