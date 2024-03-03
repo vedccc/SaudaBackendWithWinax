@@ -104,6 +104,7 @@ const reportController = {
           await partyModel.getTradedItemDetailsBySelection(req);
 
         let netPosition = 0;
+        let brokAmount = 0;
         LPartyName = String(NAME);
 
         if (req?.body?.GOnlyBrok === 0) {
@@ -220,7 +221,7 @@ const reportController = {
             LOT,
             STRIKEPRICE,
           } = tradableItemRecordSet.Fields;
-          console.log("STRIKEPRICE", STRIKEPRICE);
+
           LCalval =
             (EXCODE === "NSE" && LOTWISE === "Y") ||
             (EXCODE === "MCX" && LOTWISE === "Y")
@@ -537,14 +538,53 @@ const reportController = {
                 STRIKEPRICE,
                 LBrokQty2,
                 TRADEABLELOT,
-                "B",
+                CONTYPE,
                 "2",
                 ITEMID
               );
-              console.log("brokamttttttttttt=============>", LCBrokAmt);
+              brokAmount = brokAmount + LCBrokAmt;
             } else if (CONTYPE == "S") {
               lOpQty -= TRec.Fields("QTY").Value;
               LTotOpAmt -= QTY * RATE * LCalval;
+
+              switch (LBrokType) {
+                case "Z":
+                  LBrokQty = LBrokLot;
+                  break;
+                case "R":
+                case "A":
+                case "5":
+                  LBrokQty2 = LBrokLot;
+                  break;
+                default:
+                  // Handle default case if needed
+                  break;
+              }
+              if (
+                LBrokType == "O" ||
+                LBrokType == "C" ||
+                LBrokType == "A" ||
+                LBrokType == "5"
+              ) {
+                // LBrokQty = Get_BrokQty(LBrokType, LBalQty, "S", QTY);
+              }
+              LCBrokAmt = calcBrokerage(
+                LBrokType,
+                LBrokRate,
+                LBrokRate2,
+                LBrokQty,
+                QTY,
+                RATE,
+                LCalval,
+                INSTTYPE,
+                STRIKEPRICE,
+                LBrokQty2,
+                TRADEABLELOT,
+                CONTYPE,
+                "2",
+                ITEMID
+              );
+              brokAmount = brokAmount + LCBrokAmt;
             }
             TRec.MoveNext();
           }
@@ -570,19 +610,12 @@ const reportController = {
             Profit = LTotSellAmt - LTotBuyAmt;
           }
 
-          console.log("Nameck=================================>", NAME);
-          console.log("lOpQtyfinal=================================>", lOpQty);
-          console.log(
-            "LTotOpAmtFinal=================================>",
-            LTotOpAmt
-          );
-          console.log("Loss=================================>", Loss);
-          console.log("Profit=================================>", Profit);
           if (Profit > 0) {
             netPosition = netPosition + Profit;
           } else if (Loss > 0) {
             netPosition = netPosition - Loss;
           }
+
           tradableItemRecordSet.MoveNext();
         }
 
@@ -590,22 +623,21 @@ const reportController = {
           arr.push({
             partyName: LPartyName,
             gross_MTM: netPosition,
-            brokAmt: 0,
-            netCreditAmount: netPosition - 2000,
+            brokAmt: brokAmount,
+            netCreditAmount: netPosition - brokAmount,
           });
         } else {
           arr.push({
             partyName: LPartyName,
             gross_MTM: Math.abs(netPosition),
-            brokAmt: 0,
-            netDebitAmount: Math.abs(netPosition) - 2000,
+            brokAmt: brokAmount,
+            netDebitAmount: Math.abs(netPosition) + brokAmount,
           });
         }
 
         partiesRecordset.MoveNext();
       }
 
-      console.log("netPosition============>", arr);
       generatePDF(arr);
       const excelBuffer = await generateExcel(arr, LTFromDate, LTillDate);
       res.setHeader(

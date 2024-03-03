@@ -12,6 +12,6 @@ const router = express.Router();
 // router.get("/getAllCompanies", companyController.getAllCompanies);
 
 // test
-router.get("/billSumary", reportController.billSummary);
+router.post("/billSumary", reportController.billSummary);
 
 module.exports = router;

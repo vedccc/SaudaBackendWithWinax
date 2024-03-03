@@ -18,9 +18,8 @@ function calcBrokerage(
   sno,
   lpitemid
 ) {
-  let snoValue = sno || "1";
+  let snoValue = sno ? sno : "1";
   let LPCBrokamt = 0;
-  let GScGroup = ""; // Define GScGroup appropriately in your code
 
   const TRec2 = new winax.Object("ADODB.Recordset");
   const Cnn = new winax.Object("ADODB.Connection");
@@ -36,35 +35,35 @@ function calcBrokerage(
   let QTYUNIT = TRec2.Fields("QTYUNIT").Value;
 
   if (LPBrokType !== "D") {
-    if (LPBrokType === "T") {
+    if (LPBrokType == "T") {
       LPCBrokamt = LPBrokRate * LPQty;
-    } else if (LPBrokType === "A") {
-      if (LPBrokQty2 === 0) {
+    } else if (LPBrokType == "A") {
+      if (LPBrokQty2 == 0) {
         console.log("Please Update Brokerage Qty");
       } else {
         LPCBrokamt = (LPBrokRate * LPBrokQty) / LPBrokQty2;
       }
-    } else if (LPBrokType === "5") {
-      if (LPBrokQty2 === 0) {
-        // console.log("Please Update Brokerage Qty");
+    } else if (LPBrokType == "5") {
+      if (LPBrokQty2 == 0) {
+        console.log("Please Update Brokerage Qty");
       } else {
         LPCBrokamt = (LPBrokRate * LPBrokQty) / LPBrokQty2;
       }
-    } else if (LPBrokType === "1") {
+    } else if (LPBrokType == "1") {
       let A = (LPBrokRate / 100) * LPRATE;
       LPCBrokamt = A * LPQty;
-    } else if (LPBrokType === "Z") {
-      if (LPBrokQty === 0) {
-        // console.log("Please Update Brokerage Qty");
+    } else if (LPBrokType == "Z") {
+      if (LPBrokQty == 0) {
+        console.log("Please Update Brokerage Qty");
       } else {
-        if (EXCHANGECODE === "MCX" && QTYUNIT !== null && QTYUNIT >= 1) {
+        if (EXCHANGECODE == "MCX" && QTYUNIT !== null && QTYUNIT >= 1) {
           LPCBrokamt = (LPBrokRate * LPQty) / QTYUNIT;
         } else {
           LPCBrokamt = LPBrokRate * (LPQty / LPBrokQty);
         }
       }
-    } else if (LPBrokType === "R") {
-      if (LPBrokQty2 === 0) {
+    } else if (LPBrokType == "R") {
+      if (LPBrokQty2 == 0) {
         console.log("Please Update Brokerage Qty");
       } else {
         if (LPBrokQty !== 0) {
@@ -73,41 +72,41 @@ function calcBrokerage(
           LPCBrokamt = 0;
         }
       }
-    } else if (LPBrokType === "F") {
+    } else if (LPBrokType == "F") {
       if (LPTradeableLot !== 0) {
         if (LPTradeableLot < LPQty) LPTradeableLot = LPQty;
         LPCBrokamt = LPBrokRate * (LPQty / LPTradeableLot);
       }
-    } else if (LPBrokType === "P") {
+    } else if (LPBrokType == "P") {
       LPCBrokamt = (LPBrokRate / 100) * LPQty * LPRATE * LPCalval;
-    } else if (LPBrokType === "2") {
+    } else if (LPBrokType == "2") {
       LPCBrokamt = (LPBrokRate / 100) * (LPQty * 100 * LPCalval);
-    } else if (LPBrokType === "U") {
+    } else if (LPBrokType == "U") {
       LPCBrokamt = LPBrokRate * LPQty * LPTradeableLot;
-    } else if (LPBrokType === "O" || LPBrokType === "C") {
+    } else if (LPBrokType == "O" || LPBrokType == "C") {
       LPCBrokamt = LPBrokRate * LPBrokQty;
-    } else if (LPBrokType === "N") {
+    } else if (LPBrokType == "N") {
       LPCBrokamt = LPBrokRate;
-    } else if (LPBrokType === "I") {
+    } else if (LPBrokType == "I") {
       LPCBrokamt = (LPBrokRate / 100) * LPBrokQty * LPRATE * LPCalval;
       LPCBrokamt +=
         (LPBrokRate2 / 100) * (LPQty - LPBrokQty) * LPRATE * LPCalval;
-    } else if (LPBrokType === "4") {
+    } else if (LPBrokType == "4") {
       LPCBrokamt = (LPBrokRate / 100) * LPBrokQty * LPRATE * LPCalval;
       LPCBrokamt += (LPBrokRate2 / 100) * LPBrokQty2 * LPRATE * LPCalval;
-    } else if (LPBrokType === "Q") {
+    } else if (LPBrokType == "Q") {
       LPCBrokamt = LPBrokRate * LPBrokQty;
-    } else if (LPBrokType === "V") {
+    } else if (LPBrokType == "V") {
       LPCBrokamt = (LPBrokRate / 100) * LPBrokQty * LPRATE * LPCalval;
       LPCBrokamt +=
         (LPBrokRate2 / 100) * (LPQty - LPBrokQty) * LPRATE * LPCalval;
-    } else if (LPBrokType === "S") {
+    } else if (LPBrokType == "S") {
       LPCBrokamt = LPBrokRate * LPBrokQty;
       LPCBrokamt += LPBrokRate2 * (LPQty - LPBrokQty);
-    } else if (LPBrokType === "Y") {
+    } else if (LPBrokType == "Y") {
       LPCBrokamt = LPBrokRate * LPBrokQty;
       LPCBrokamt += LPBrokRate2 * (LPQty - LPBrokQty);
-    } else if (LPBrokType === "M") {
+    } else if (LPBrokType == "M") {
       if (LPBrokQty !== 0) {
         let A = LPRATE * LPBrokQty * LPCalval * (LPBrokRate / 100);
         let B = A / LPBrokQty;
@@ -118,21 +117,21 @@ function calcBrokerage(
         let B = A / (LPQty - LPBrokQty);
         LPCBrokamt += Math.round(B * (LPQty - LPBrokQty) * 100) / 100;
       }
-    } else if (LPBrokType === "W") {
+    } else if (LPBrokType == "W") {
       LPCBrokamt = (LPBrokRate / 100) * (LPQty - LPBrokQty) * LPRATE * LPCalval;
       LPCBrokamt += (LPBrokRate2 / 100) * (LPBrokQty * LPRATE * LPCalval);
-    } else if (LPBrokType === "X") {
+    } else if (LPBrokType == "X") {
       LPCBrokamt =
         Math.round(((LPRATE * LPBrokRate) / 100) * LPBrokQty * LPCalval * 100) /
         100;
-    } else if (LPBrokType === "H") {
+    } else if (LPBrokType == "H") {
       LPCBrokamt = (LPBrokRate / 100) * LPBrokQty * LPRATE * LPCalval;
-    } else if (LPBrokType === "L") {
+    } else if (LPBrokType == "L") {
       LPCBrokamt = LPBrokRate * LPBrokQty;
     }
-  } else if (LPBrokType === "D") {
+  } else if (LPBrokType == "D") {
     if (GScGroup !== "T") {
-      if (LPCconType === "S") {
+      if (LPCconType == "S") {
         LPCBrokamt =
           (LPBrokRate / 100) * (LPQty - LPBrokQty) * LPRATE * LPCalval;
       }

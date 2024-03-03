@@ -110,8 +110,8 @@ const generateExcel = async (arr, fromDate, toDate) => {
   }
 
   await workbook.xlsx.writeFile("output.xlsx");
-  //   const buffer = await workbook.xlsx.writeBuffer();
-  //   return buffer;
+  const buffer = await workbook.xlsx.writeBuffer();
+  return buffer;
 };
 
 const generatePDF = async (arr) => {
